@@ -63,6 +63,26 @@ export $(cat .env | xargs)
 
 (`.env` is gitignored — never commit real API keys.)
 
+### Default model
+
+`.env` also sets `ANTHROPIC_MODEL` (defaults to `claude-haiku-4-5`) to keep
+token spend low while practicing. When writing exercise code that calls the
+Messages API, read the model from this env var instead of hardcoding a model
+string:
+
+```python
+import os
+
+MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
+```
+
+Override it for a single run when an exercise specifically needs a stronger
+model:
+
+```bash
+ANTHROPIC_MODEL=claude-opus-5 uv run exercises/03_mcp_resource_server_http/server.py
+```
+
 ### Linting & tests
 
 ```bash
