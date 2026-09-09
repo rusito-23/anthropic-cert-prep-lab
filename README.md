@@ -43,18 +43,23 @@ from dotenv import load_dotenv
 load_dotenv()
 ```
 
-### Default model
+### Default model & max tokens
 
-`.env` also sets `ANTHROPIC_MODEL` (defaults to `claude-haiku-4-5`) to keep
-token spend low while practicing. When writing exercise code that calls the
-Messages API, read the model from this env var instead of hardcoding a model
-string:
+`.env` also sets `ANTHROPIC_MODEL` (defaults to `claude-haiku-4-5`) and
+`ANTHROPIC_MAX_TOKENS` (defaults to `1024`) to keep token spend low and
+predictable while practicing. When writing exercise code that calls the
+Messages API, read both from env instead of hardcoding them:
 
 ```python
 import os
 
 MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
+MAX_TOKENS = int(os.environ.get("ANTHROPIC_MAX_TOKENS", "1024"))
 ```
+
+If a response gets cut off (`stop_reason: "max_tokens"`), raise
+`ANTHROPIC_MAX_TOKENS` for that run rather than hardcoding a bigger number in
+the exercise itself.
 
 ### Linting & tests
 
