@@ -9,6 +9,7 @@ requires-python = ">=3.12"
 dependencies = [
     "anthropic>=0.40.0",
     "mcp",
+    "python-dotenv>=1.2.3",
 ]
 
 [dependency-groups]

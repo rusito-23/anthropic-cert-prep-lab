@@ -3,6 +3,9 @@
 import os
 
 from anthropic import Anthropic
+from dotenv import load_dotenv
+
+load_dotenv()
 
 MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
 
