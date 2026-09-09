@@ -1,6 +1,6 @@
 ---
 name: new-exercise
-description: Scaffold a new numbered exercise folder under exercises/ in this repo — a README describing the task and empty stub file(s), with zero implementation code. Use when the user wants to start a new certification-prep exercise (e.g. "new exercise: MCP resource server over HTTP", "scaffold an exercise for the Messages API").
+description: Scaffold a new numbered exercise folder under exercises/ in this repo — a README describing the task and stub file(s) with only common env/client boilerplate (no exercise-specific implementation code). Use when the user wants to start a new certification-prep exercise (e.g. "new exercise: MCP resource server over HTTP", "scaffold an exercise for the Messages API").
 arguments: [topic]
 ---
 
@@ -34,15 +34,47 @@ stub files.
      to exercise it manually) → `server.py` + `client.py`
    - If genuinely unclear, ask rather than guessing.
 
-   Each stub file gets **only** a one-line module docstring naming its
-   purpose — nothing else. Example:
+   Every stub file gets a one-line module docstring naming its purpose.
+   Beyond that, the amount of boilerplate depends on the file's role:
 
-   ```python
-   """MCP tool server exposing a calculator tool over stdio."""
-   ```
+   - **`main.py`** (Messages API playground scripts): also include the
+     common environment/client setup every exercise in this repo repeats —
+     `load_dotenv()`, the `Anthropic()` client, and the `ANTHROPIC_MODEL` /
+     `ANTHROPIC_MAX_TOKENS` env-var constants, plus an empty `main()` and
+     `if __name__ == "__main__":` guard. Match the shape used in
+     `exercises/00_hello_claude/main.py`:
 
-   No imports, no `if __name__ == "__main__"`, no class/function skeletons,
-   no step-by-step comments. The blank page is the point.
+     ```python
+     """<one-line purpose>."""
+
+     import os
+
+     from anthropic import Anthropic
+     from dotenv import load_dotenv
+
+     load_dotenv()
+
+     MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
+     MAX_TOKENS = int(os.environ.get("ANTHROPIC_MAX_TOKENS", "1024"))
+
+
+     def main() -> None:
+         client = Anthropic()  # reads ANTHROPIC_API_KEY from the environment
+
+
+     if __name__ == "__main__":
+         main()
+     ```
+
+     This is wiring, not solution code — leave `main()`'s body otherwise
+     empty. Never add the tool schemas, message content, request/response
+     handling, or any other logic specific to the exercise itself.
+
+   - **`server.py` / `client.py`** (MCP exercises): only the one-line
+     docstring — no imports, no `if __name__ == "__main__"`, no
+     class/function skeletons, no step-by-step comments. There's no
+     established common setup for these yet, so the blank page stays the
+     point until a pattern emerges.
 
 4. **Write `exercises/<NN>_<slug>/README.md`** with:
    - A one-line title
