@@ -59,7 +59,7 @@ stub files.
 
 
      def main() -> None:
-         client = Anthropic()  # reads ANTHROPIC_API_KEY from the environment
+         client = Anthropic()  # reads ANTHROPIC_API_KEY from the environment  # noqa: F841
 
 
      if __name__ == "__main__":
