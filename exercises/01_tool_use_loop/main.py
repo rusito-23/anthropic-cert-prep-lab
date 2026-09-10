@@ -1,6 +1,8 @@
 """CLI script implementing a manual tool-use loop against the Messages API."""
 
+import argparse
 import json
+import logging
 import os
 import random
 from collections.abc import Iterable
@@ -16,15 +18,7 @@ load_dotenv()
 
 MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
 MAX_TOKENS = int(os.environ.get("ANTHROPIC_MAX_TOKENS", "1024"))
-
-
-FAKE_WEATHER = {
-    "tokyo": {"condition": "rainy", "temp_c": 14},
-    "san francisco": {"condition": "foggy", "temp_c": 12},
-    "cairo": {"condition": "sunny", "temp_c": 34},
-}
-
-KNOWN_MISSING_WHEATHER = ["moon", "sun", "mars", "outer-space"]
+KNOWN_MISSING_WEATHER = ["moon", "sun", "mars", "outer-space"]
 
 
 # Tool definition
@@ -38,13 +32,9 @@ class RunToolError(Exception):
         self.message = message
 
 
-def get_wheather(location: str) -> dict:
-    known = FAKE_WEATHER.get(location.strip().lower())
-    if known is not None:
-        return known
-
-    if location.strip().lower() in KNOWN_MISSING_WHEATHER:
-        raise RunToolError(message=f"The wheather for the location {location} is unknown.")
+def get_weather(location: str) -> dict:
+    if location.strip().lower() in KNOWN_MISSING_WEATHER:
+        raise RunToolError(message=f"The weather for the location {location} is unknown.")
 
     rng = random.Random(location.strip().lower())
     condition = rng.choice(["sunny", "rainy", "snowy", "cloudy"])
@@ -52,13 +42,22 @@ def get_wheather(location: str) -> dict:
     return {"condition": condition, "temp_c": temp_c}
 
 
-REGISTERED_TOOLS = {"get_wheather": get_wheather}
+def get_current_time(timezone: str) -> dict:
+    hours = random.randint(0, 23)
+    minutes = random.randint(0, 59)
+    return {"time": f"{hours:02d}:{minutes:02d}"}
+
+
+REGISTERED_TOOLS = {
+    "get_weather": get_weather,
+    "get_current_time": get_current_time,
+}
 
 REGISTERED_TOOL_DEFINITIONS = [
     {
-        "name": "get_wheather",
+        "name": "get_weather",
         "description": """
-        Retrieve the current wheather for given location.
+        Retrieve the current weather for given location.
         The location can be a city, state or general place.
         """,
         "input_schema": {
@@ -66,7 +65,18 @@ REGISTERED_TOOL_DEFINITIONS = [
             "properties": {"location": {"type": "string"}},
             "required": ["location"],
         },
-    }
+    },
+    {
+        "name": "get_current_time",
+        "description": """
+        Retrieve the current time in HH:MM for the given timezone.
+        """,
+        "input_schema": {
+            "type": "object",
+            "properties": {"timezone": {"type": "string"}},
+            "required": ["timezone"],
+        },
+    },
 ]
 
 
@@ -76,19 +86,26 @@ REGISTERED_TOOL_DEFINITIONS = [
 def execute_tool(block: ContentBlock) -> dict:
     try:
         tool = REGISTERED_TOOLS[block.name]
+        logging.debug(f"Executing tool {block.name} with input {block.input}")
+
+        result = tool(**block.input)
+        logging.debug(f"Tool execution {block.name} got output {result}")
+
         return {
             "type": "tool_result",
             "tool_use_id": block.id,
-            "content": json.dumps(tool(**block.input)),
+            "content": json.dumps(result),
         }
-    except TypeError:
+    except TypeError as err:
+        logging.error(f"Tool execution {block.name} failed with {err}")
         return {
             "type": "tool_result",
             "tool_use_id": block.id,
             "is_error": True,
             "content": f"The tool {block.name} does not match provided inputs.",
         }
-    except KeyError:
+    except KeyError as err:
+        logging.error(f"Tool execution {block.name} failed with {err}")
         return {
             "type": "tool_result",
             "tool_use_id": block.id,
@@ -96,6 +113,7 @@ def execute_tool(block: ContentBlock) -> dict:
             "content": f"The tool {block.name} does not exist.",
         }
     except RunToolError as err:
+        logging.error(f"Tool execution {block.name} failed with {err}")
         return {
             "type": "tool_result",
             "tool_use_id": block.id,
@@ -125,6 +143,7 @@ def run_loop(user_input: str):
         response = client.messages.create(
             model=MODEL, max_tokens=MAX_TOKENS, messages=messages, tools=REGISTERED_TOOL_DEFINITIONS
         )
+        logging.debug(f"Run loop got stop_reason={response.stop_reason}")
 
         if response.stop_reason == "tool_use":
             messages.append({"role": "assistant", "content": response.content})
@@ -138,8 +157,14 @@ def run_loop(user_input: str):
 
 
 def main() -> None:
+    # Setup logger
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug", action="store_true", help="enable debug logging")
+    args = parser.parse_args()
+    logging.basicConfig(level=logging.DEBUG if args.debug else logging.WARNING)
+
     # Prompt the user for input
-    user_input = input("Enter your question about the wheather: ")
+    user_input = input("Enter your question about the weather: ")
 
     # Run the tool use loop until the model indicates it's done
     response = run_loop(user_input=user_input)
