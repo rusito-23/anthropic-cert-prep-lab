@@ -1,14 +1,9 @@
 """Sanity check that the environment and API key are wired up correctly."""
 
-import os
-
 from anthropic import Anthropic
-from dotenv import load_dotenv
 
-load_dotenv()
-
-MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
-MAX_TOKENS = int(os.environ.get("ANTHROPIC_MAX_TOKENS", "1024"))
+from common.config import MAX_TOKENS, MODEL
+from common.content import extract_text
 
 
 def main() -> None:
@@ -18,9 +13,7 @@ def main() -> None:
         max_tokens=MAX_TOKENS,
         messages=[{"role": "user", "content": "Say hello in one short sentence."}],
     )
-    for block in message.content:
-        if block.type == "text":
-            print(block.text)
+    print(extract_text(message.content))
 
 
 if __name__ == "__main__":

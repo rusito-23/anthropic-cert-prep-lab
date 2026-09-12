@@ -2,17 +2,12 @@
 
 import argparse
 import base64
-import os
 from pathlib import Path
 
 from anthropic import Anthropic
-from dotenv import load_dotenv
 
-load_dotenv()
-
-MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
-MAX_TOKENS = int(os.environ.get("ANTHROPIC_MAX_TOKENS", "1024"))
-
+from common.config import MAX_TOKENS, MODEL
+from common.content import extract_text
 
 # Main
 
@@ -60,7 +55,7 @@ def main() -> None:
     )
 
     # Assemble response text
-    response_text = "".join([block.text for block in response.content if block.type == "text"])
+    response_text = extract_text(response.content)
 
     # Verify response
     print(response_text)

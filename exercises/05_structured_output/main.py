@@ -3,19 +3,14 @@
 import argparse
 import json
 import logging
-import os
 
 from anthropic import Anthropic
-from dotenv import load_dotenv
 
+from common.config import MAX_TOKENS, MODEL
+from common.content import extract_text
 from common.logger import add_verbosity_argument, configure_logging
 
-load_dotenv()
-
 logger = logging.getLogger(__name__)
-
-MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
-MAX_TOKENS = int(os.environ.get("ANTHROPIC_MAX_TOKENS", "1024"))
 
 
 def main() -> None:
@@ -52,7 +47,7 @@ def main() -> None:
         },
     )
 
-    text_result = "".join([block.text for block in response.content if block.type == "text"])
+    text_result = extract_text(response.content)
     logger.debug(f"Result: {text_result}")
     result = json.loads(text_result)
 

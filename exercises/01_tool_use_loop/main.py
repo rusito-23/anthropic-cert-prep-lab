@@ -3,25 +3,21 @@
 import argparse
 import json
 import logging
-import os
 import random
 from collections.abc import Iterable
 
 from anthropic import Anthropic
 from anthropic.types import ContentBlock
-from dotenv import load_dotenv
 
+from common.config import MAX_TOKENS, MODEL
+from common.content import extract_text
 from common.logger import add_verbosity_argument, configure_logging
 
 # Constants
 
 
-load_dotenv()
-
 logger = logging.getLogger(__name__)
 
-MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
-MAX_TOKENS = int(os.environ.get("ANTHROPIC_MAX_TOKENS", "1024"))
 KNOWN_MISSING_WEATHER = ["moon", "sun", "mars", "outer-space"]
 
 
@@ -174,9 +170,7 @@ def main() -> None:
     response = run_loop(user_input=user_input)
 
     # Print the response
-    for block in response.content:
-        if block.type == "text":
-            print(block.text)
+    print(extract_text(response.content))
 
 
 if __name__ == "__main__":
