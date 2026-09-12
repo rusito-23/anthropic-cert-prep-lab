@@ -11,10 +11,14 @@ from anthropic import Anthropic
 from anthropic.types import ContentBlock
 from dotenv import load_dotenv
 
+from common.logger import add_verbosity_argument, configure_logging
+
 # Constants
 
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
 MAX_TOKENS = int(os.environ.get("ANTHROPIC_MAX_TOKENS", "1024"))
@@ -86,10 +90,10 @@ REGISTERED_TOOL_DEFINITIONS = [
 def execute_tool(block: ContentBlock) -> dict:
     try:
         tool = REGISTERED_TOOLS[block.name]
-        logging.debug(f"Executing tool {block.name} with input {block.input}")
+        logger.debug(f"Executing tool {block.name} with input {block.input}")
 
         result = tool(**block.input)
-        logging.debug(f"Tool execution {block.name} got output {result}")
+        logger.debug(f"Tool execution {block.name} got output {result}")
 
         return {
             "type": "tool_result",
@@ -97,7 +101,7 @@ def execute_tool(block: ContentBlock) -> dict:
             "content": json.dumps(result),
         }
     except TypeError as err:
-        logging.error(f"Tool execution {block.name} failed with {err}")
+        logger.error(f"Tool execution {block.name} failed with {err}")
         return {
             "type": "tool_result",
             "tool_use_id": block.id,
@@ -105,7 +109,7 @@ def execute_tool(block: ContentBlock) -> dict:
             "content": f"The tool {block.name} does not match provided inputs.",
         }
     except KeyError as err:
-        logging.error(f"Tool execution {block.name} failed with {err}")
+        logger.error(f"Tool execution {block.name} failed with {err}")
         return {
             "type": "tool_result",
             "tool_use_id": block.id,
@@ -113,7 +117,7 @@ def execute_tool(block: ContentBlock) -> dict:
             "content": f"The tool {block.name} does not exist.",
         }
     except RunToolError as err:
-        logging.error(f"Tool execution {block.name} failed with {err}")
+        logger.error(f"Tool execution {block.name} failed with {err}")
         return {
             "type": "tool_result",
             "tool_use_id": block.id,
@@ -143,7 +147,7 @@ def run_loop(user_input: str):
         response = client.messages.create(
             model=MODEL, max_tokens=MAX_TOKENS, messages=messages, tools=REGISTERED_TOOL_DEFINITIONS
         )
-        logging.debug(f"Run loop got stop_reason={response.stop_reason}")
+        logger.debug(f"Run loop got stop_reason={response.stop_reason}")
 
         if response.stop_reason == "tool_use":
             messages.append({"role": "assistant", "content": response.content})
@@ -159,9 +163,9 @@ def run_loop(user_input: str):
 def main() -> None:
     # Setup logger
     parser = argparse.ArgumentParser()
-    parser.add_argument("--debug", action="store_true", help="enable debug logging")
+    add_verbosity_argument(parser)
     args = parser.parse_args()
-    logging.basicConfig(level=logging.DEBUG if args.debug else logging.WARNING)
+    configure_logging(args.verbose)
 
     # Prompt the user for input
     user_input = input("Enter your question about the weather: ")

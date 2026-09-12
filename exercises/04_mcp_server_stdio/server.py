@@ -9,6 +9,10 @@ from mcp.server import Server
 from mcp.server.context import ServerRequestContext
 from mcp.server.stdio import stdio_server
 
+from common.logger import add_verbosity_argument, configure_logging
+
+logger = logging.getLogger(__name__)
+
 # Tools
 
 
@@ -61,7 +65,7 @@ TOOLS = {
 async def list_tools(
     context: ServerRequestContext, params: mcp.types.PaginatedRequestParams | None = None
 ) -> mcp.types.ListToolsResult:
-    logging.debug("List tools requested.")
+    logger.debug("List tools requested.")
     return mcp.types.ListToolsResult(
         tools=[
             mcp.types.Tool(
@@ -79,28 +83,28 @@ async def call_tool(
 ) -> mcp.types.CallToolResult:
     name = params.name
     arguments = params.arguments
-    logging.debug(f"Executing tool {name} with input {arguments}")
+    logger.debug(f"Executing tool {name} with input {arguments}")
 
     tool = TOOLS.get(name)
     if not tool:
-        logging.error(f"Failed to retrieve tool with name {name}")
+        logger.error(f"Failed to retrieve tool with name {name}")
         raise ValueError(f"Unknown tool: {name}")
 
     try:
         result = tool.get("function")(**arguments)
-        logging.debug(f"Tool execution {name} got output {result}")
+        logger.debug(f"Tool execution {name} got output {result}")
 
         return mcp.types.CallToolResult(content=[{"type": "text", "text": f"{result}"}])
 
     except RunToolError as err:
-        logging.error(f"Tool execution {name} failed with {err}")
+        logger.error(f"Tool execution {name} failed with {err}")
         return mcp.types.CallToolResult(
             is_error=True,
             content=[{"type": "text", "text": err.message}],
         )
 
     except Exception as err:
-        logging.error(f"Tool execution {name} failed with {err}")
+        logger.error(f"Tool execution {name} failed with {err}")
         return mcp.types.CallToolResult(
             is_error=True,
             content=[{"type": "text", "text": "The operation could not be completed."}],
@@ -123,7 +127,7 @@ RESOURCES = {
 async def list_resources(
     context: ServerRequestContext, params: mcp.types.PaginatedRequestParams | None = None
 ) -> mcp.types.ListResourcesResult:
-    logging.debug("List resources requested.")
+    logger.debug("List resources requested.")
     return mcp.types.ListResourcesResult(
         resources=[
             mcp.types.Resource(uri=uri, name=res.get("name"), mime_type=res.get("mime_type"))
@@ -137,10 +141,10 @@ async def read_resource(
 ) -> mcp.types.ReadResourceResult:
     uri = params.uri
     res = RESOURCES.get(uri)
-    logging.debug(f"Resource {uri} requested.")
+    logger.debug(f"Resource {uri} requested.")
 
     if not res:
-        logging.error(f"Resource not found at {uri}")
+        logger.error(f"Resource not found at {uri}")
         raise ValueError(f"Resource not found: {uri}")
 
     return mcp.types.ReadResourceResult(
@@ -187,9 +191,9 @@ async def run_server():
 def main():
     # Setup logger
     parser = argparse.ArgumentParser()
-    parser.add_argument("--debug", action="store_true", help="enable debug logging")
+    add_verbosity_argument(parser)
     args = parser.parse_args()
-    logging.basicConfig(level=logging.DEBUG if args.debug else logging.WARNING)
+    configure_logging(args.verbose)
 
     # Run server
     try:
