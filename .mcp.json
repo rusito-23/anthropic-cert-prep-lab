@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "math-ops": {
+      "command": "uv",
+      "args": ["run", "python", "exercises/04_mcp_server_stdio/server.py"]
+    }
+  }
+}
