@@ -12,14 +12,28 @@ from mcp.server.stdio import stdio_server
 # Tools
 
 
+class RunToolError(Exception):
+    """Raised when a tool runs into an error."""
+
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = message
+
+
 def add(num1: int, num2: int) -> int:
     return num1 + num2
+
+
+def divide(num1: int, num2: int) -> float:
+    if num2 == 0:
+        raise RunToolError("Division by zero is impossible")
+    return num1 / num2
 
 
 TOOLS = {
     "add": {
         "function": add,
-        "description": "Executes the add between two numbers.",
+        "description": "Executes the addition between two numbers.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -28,7 +42,19 @@ TOOLS = {
             },
             "required": ["num1", "num2"],
         },
-    }
+    },
+    "divide": {
+        "function": divide,
+        "description": "Executes the division between two numbers.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "num1": {"type": "integer"},
+                "num2": {"type": "integer"},
+            },
+            "required": ["num1", "num2"],
+        },
+    },
 }
 
 
@@ -65,6 +91,14 @@ async def call_tool(
         logging.debug(f"Tool execution {name} got output {result}")
 
         return mcp.types.CallToolResult(content=[{"type": "text", "text": f"{result}"}])
+
+    except RunToolError as err:
+        logging.error(f"Tool execution {name} failed with {err}")
+        return mcp.types.CallToolResult(
+            is_error=True,
+            content=[{"type": "text", "text": err.message}],
+        )
+
     except Exception as err:
         logging.error(f"Tool execution {name} failed with {err}")
         return mcp.types.CallToolResult(
