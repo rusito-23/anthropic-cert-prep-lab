@@ -30,7 +30,3 @@ uv run exercises/00_hello_claude/main.py
 uv run ruff check .
 uv run pytest
 ```
-
-## Status
-
-🚧 In progress — tracking hands-on practice toward Anthropic certifications.
