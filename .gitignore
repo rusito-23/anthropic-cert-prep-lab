@@ -1,0 +1,10 @@
+.DS_Store
+.env
+.venv/
+__pycache__/
+node_modules/
+*.pyc
+
+# global gitignore blanket-excludes .claude/ — this repo tracks its skills
+!.claude/
+!.claude/**
