@@ -5,7 +5,7 @@
 Simulate a tool result that contains an injected instruction, and verify
 Claude doesn't follow it.
 
-- Set up a tool-use loop (reuse the shape from exercise 01/07) with at
+- Set up a tool-use loop (reuse the shape from exercise 01/06) with at
   least one tool.
 - Make that tool's result text contain an embedded instruction designed to
   hijack the conversation, e.g.:

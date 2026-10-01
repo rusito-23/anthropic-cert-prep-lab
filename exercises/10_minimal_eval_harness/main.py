@@ -1,4 +1,4 @@
-"""Run a small fixed prompt/expected-substring eval set through the exercise 07 loop."""
+"""Run a small fixed prompt/expected-substring eval set through the exercise 06 loop."""
 
 from anthropic import Anthropic
 
