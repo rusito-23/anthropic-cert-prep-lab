@@ -2,6 +2,17 @@
 
 A workspace for hands-on exercises while preparing for Anthropic/Claude certifications.
 
+## Starting fresh
+
+`main` contains my solutions. To work through the exercises yourself, use the
+[`starter`](https://github.com/rusito-23/anthropic-cert-prep-lab/tree/starter)
+branch — same exercises, READMEs, and setup, but with every solution reset to
+its stub and the exam simulation answers cleared:
+
+```bash
+git clone -b starter --single-branch https://github.com/rusito-23/anthropic-cert-prep-lab.git
+```
+
 ## Structure
 
 ```
